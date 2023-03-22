@@ -49,12 +49,4 @@ contract rateup {
             }
         }
     }
-
-    function updateRates(uint256[] calldata cpdIds) external {
-        for( uint i = 0; i < cpdIds.length; i++ ) {
-            bytes32 ilks = CDP_MANAGER.ilks(cpdIds[i]);
-            MCD_JUG.drip(ilks);
-        }
-    }
-
 }
