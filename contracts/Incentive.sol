@@ -1,108 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0 ;
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 interface IERC20 {
     function transfer(address _to, uint256 _value) external returns (bool);
     function transferFrom(address _from, address _to, uint256 _value) external returns (bool);
 }
 
-abstract contract Initializable {
-    /**
-     * @dev Indicates that the contract has been initialized.
-     */
-    bool private _initialized;
-
-    /**
-     * @dev Indicates that the contract is in the process of being initialized.
-     */
-    bool private _initializing;
-
-    /**
-     * @dev Modifier to protect an initializer function from being invoked twice.
-     */
-    modifier initializer() {
-        require(_initializing || !_initialized, "Initializable: contract is already initialized");
-
-        bool isTopLevelCall = !_initializing;
-        if (isTopLevelCall) {
-            _initializing = true;
-            _initialized = true;
-        }
-
-        _;
-
-        if (isTopLevelCall) {
-            _initializing = false;
-        }
-    }
-}
-
-contract Ownable is Initializable{
-    address private _owner;
-
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    /**
-     * @dev Initializes the contract setting the deployer as the initial owner.
-     */
-    function __Ownable_init_unchained() internal initializer {
-        address msgSender = msg.sender;
-        _owner = msgSender;
-        emit OwnershipTransferred(address(0), msgSender);
-    }
-
-    /**
-     * @dev Returns the address of the current owner.
-     */
-    function owner() public view returns (address) {
-        return _owner;
-    }
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(isOwner(), "Ownable: caller is not the owner");
-        _;
-    }
-
-    /**
-     * @dev Returns true if the caller is the current owner.
-     */
-    function isOwner() public view returns (bool) {
-        return msg.sender == _owner;
-    }
-
-    /**
-     * @dev Leaves the contract without owner. It will not be possible to call
-     * `onlyOwner` functions anymore. Can only be called by the current owner.
-     *
-     * NOTE: Renouncing ownership will leave the contract without an owner,
-     * thereby removing any functionality that is only available to the owner.
-     */
-    function renounceOwnership() public onlyOwner {
-        emit OwnershipTransferred(_owner, address(0));
-        _owner = address(0);
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
-     */
-    function transferOwnership(address newOwner) public onlyOwner {
-        _transferOwnership(newOwner);
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     */
-    function _transferOwnership(address newOwner) internal {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
-        emit OwnershipTransferred(_owner, newOwner);
-        _owner = newOwner;
-    }
-}
-contract  Incentive  is Initializable,Ownable{
+contract Incentive is OwnableUpgradeable{
     bytes32 public DOMAIN_SEPARATOR;
     uint256 public nodeNum;
     mapping(address => uint256) nodeAddrIndex;
@@ -137,12 +42,12 @@ contract  Incentive  is Initializable,Ownable{
         _;
     }
 
-    function init(address[] calldata _nodeAddrs) external initializer{
+    function initialize(address[] calldata _nodeAddrs) external initializer(){
         __Ownable_init_unchained();
         __Incentive_init_unchained(_nodeAddrs);
     }
-    
-    function __Incentive_init_unchained(address[] calldata _nodeAddrs) internal initializer{
+
+    function __Incentive_init_unchained(address[] calldata _nodeAddrs) internal onlyInitializing() {
         _addNodeAddr(_nodeAddrs);
         uint chainId;
         assembly {
@@ -228,8 +133,8 @@ contract  Incentive  is Initializable,Ownable{
         );
         emit WithdrawToken(addrs[0], _nonce, addrs[1], uints[0]);
     }
-    
-    function queryNodes()  external view returns(address[] memory){
+
+    function queryNodes() external view returns(address[] memory){
         address[] memory nodes = new address[](nodeNum);
         for (uint256 i = 1; i <= nodeNum; i++) {
             nodes[i-1] = nodeIndexAddr[i];
@@ -258,7 +163,7 @@ contract  Incentive  is Initializable,Ownable{
         address _accessAccount = ecrecover(hash, _sig.v, _sig.r, _sig.s);
         return nodeAddrSta[_accessAccount];
     }
-    
+
     function getDigest(Data memory _data, uint256 _nonce) internal view returns(bytes32 digest){
         digest = keccak256(
             abi.encodePacked(

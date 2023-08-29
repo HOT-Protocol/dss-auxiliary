@@ -1,7 +1,4 @@
-/**
- *Submitted for verification at Etherscan.io on 2023-03-13
-*/
-
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 interface ICDP_MANAGER {
@@ -17,7 +14,7 @@ interface IMCD_JUG {
     function drip(bytes32 ilk) external returns (uint256 rate);
 }
 
-contract rateup {
+contract Rateup {
     ICDP_MANAGER immutable public CDP_MANAGER;
     IMCD_VAT immutable public MCD_VAT;
     IMCD_JUG immutable public MCD_JUG;
